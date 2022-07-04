@@ -2,6 +2,7 @@ const express = require('express');
 const podyParser = require('body-parser');
 const bodyParser = require('body-parser');
 const MongoClient = require('mongodb').MongoClient;
+let ObjectID = require('mongodb').ObjectId;
 
 const app = express();
 let db;
@@ -30,24 +31,34 @@ app.get('/', (req, res) => {
 });
 
 app.get('/artists', (req, res) => {
-	res.send(artists);
+	db.collection('artists').find().toArray((err, docs) => {
+		if (err) {
+			console.log(err);
+			return res.sendStatus(500);
+		}
+		res.send(docs);
+	})
+	// res.send(artists);
 })
 
 app.get('/artists/:id', (req, res) => {
-	const artist = artists.find((art) => {
-		return art.id === Number(req.params.id)
-	});
-	res.send(artist);
+	db.collection('artists').findOne({ _id: ObjectID(req.params.id) }, (err, doc) => {
+		if (err) {
+			console.log(err);
+			return res.sendStatus(500);
+		}
+		res.send(doc);
+	})
 })
 
 app.post('/artists', (req, res) => {
 	let artist = {
 		name: req.body.name
 	};
-	db.collection('artists').insert(artist, (err, result) => {
+	db.collection('artists').insertOne(artist, (err, result) => {
 		if (err) {
 			console.log(err);
-			res.sendStatus(500);
+			return res.sendStatus(500);
 		}
 		res.send(artist);
 	})
@@ -67,10 +78,6 @@ app.delete('/artists/:id', (req, res) => {
 	});
 	res.sendStatus(200);
 });
-
-// app.listen(3012, () => {
-// 	console.log('API app started')
-// })
 
 MongoClient.connect('mongodb://localhost:27017', { useNewUrlParser: true }, function (err, client) {
 
