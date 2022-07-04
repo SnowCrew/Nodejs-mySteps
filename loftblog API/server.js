@@ -1,8 +1,10 @@
 const express = require('express');
 const podyParser = require('body-parser');
 const bodyParser = require('body-parser');
+const MongoClient = require('mongodb').MongoClient;
 
 const app = express();
+let db;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -39,12 +41,16 @@ app.get('/artists/:id', (req, res) => {
 })
 
 app.post('/artists', (req, res) => {
-	const artist = {
-		id: Date.now(),
+	let artist = {
 		name: req.body.name
 	};
-	artists.push(artist);
-	res.send(artist);
+	db.collection('artists').insert(artist, (err, result) => {
+		if (err) {
+			console.log(err);
+			res.sendStatus(500);
+		}
+		res.send(artist);
+	})
 });
 
 app.put('/artists/:id', (req, res) => {
@@ -62,6 +68,19 @@ app.delete('/artists/:id', (req, res) => {
 	res.sendStatus(200);
 });
 
-app.listen(3012, () => {
-	console.log('API app started')
+// app.listen(3012, () => {
+// 	console.log('API app started')
+// })
+
+MongoClient.connect('mongodb://localhost:27017', { useNewUrlParser: true }, function (err, client) {
+
+	if (err) {
+		return console.log(err);
+	}
+	db = client.db('artists');
+
+	app.listen(3012, function () {
+		console.log("API app started");
+	});
+
 })
